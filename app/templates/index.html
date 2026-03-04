@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Descarga de reportes MOP{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Descarga de reportes MOP – Telemetría</h1>
+
+<form method="post" class="mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label">Lista de pozos</label>
+      <select name="lista" class="form-select" required>
+        <option value="">Selecciona una lista…</option>
+        <option value="P5">P5</option>
+        <option value="P12">P12</option>
+        <option value="P17">P17</option>
+        <option value="P22">P22</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Desde</label>
+      <input type="date" name="start_date" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Hasta</label>
+      <input type="date" name="end_date" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">
+        Iniciar descarga
+      </button>
+    </div>
+  </div>
+</form>
+
+<div class="mb-4">
+  <h2 class="h5">Estado de la descarga actual</h2>
+
+  {% if job_state.status == "idle" %}
+    <p class="text-muted">No hay descargas en curso.</p>
+  {% else %}
+    <p>
+      <strong>Lista:</strong> {{ job_state.lista }}<br>
+      <strong>Periodo:</strong> {{ job_state.start_date }} a {{ job_state.end_date }}<br>
+      <strong>Estado:</strong> {{ job_state.status }}
+    </p>
+
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>Código OB</th>
+          <th>Estado</th>
+          <th>Mensaje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in job_state.detalles %}
+        <tr>
+          <td>{{ item.codigo }}</td>
+          <td>{{ item.estado }}</td>
+          <td>{{ item.mensaje }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div>
+  <h2 class="h5">Navegador remoto (CAPTCHA)</h2>
+  <div class="border rounded bg-white p-3 text-muted" style="height: 300px;">
+    Aquí se integrará la vista del navegador remoto (noVNC) en una fase posterior.
+  </div>
+</div>
+{% endblock %}
