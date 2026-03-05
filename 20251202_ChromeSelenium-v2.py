@@ -10,7 +10,7 @@ def main():
         print("No codes found in data/pozosADescargarP5.txt")
         return
 
-    run_download_job(cfg, codes)
+    run_download_job(cfg, codes, "P5")
 
 
 if __name__ == "__main__":

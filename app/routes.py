@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request,  redirect, url_for
 from core.config import load_codes, load_config
 import threading
 from core.mop_client import run_download_job
@@ -47,6 +47,10 @@ def index():
 @bp.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
+        if JOB_STATE["status"] == "en_curso":
+            # Ya hay un job corriendo; no lanzamos otro
+            return render_template("index.html", job_state=JOB_STATE)
+        
         selected_list = request.form.get("lista")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
@@ -85,11 +89,11 @@ def index():
         # Lanzamos el job en un hilo en background
         t = threading.Thread(
             target=run_download_job,
-            args=(cfg, codes, on_job_status),
+            args=(cfg, codes, selected_list, on_job_status),
             daemon=True,
         )
         t.start()
-        
+        return redirect(url_for("main.index"))
     return render_template(
         "index.html",
         job_state=JOB_STATE,

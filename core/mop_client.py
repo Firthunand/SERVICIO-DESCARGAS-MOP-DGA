@@ -65,7 +65,7 @@ def click_mediciones(driver, timeout=15) -> bool:
 def run_download_job(
     cfg: dict,
     codes: list[str],
-        
+    lista_id: str,  # P5, P12, P17, P22
     on_status: Optional[Callable[[dict], None]] = None,
 ):
     """
@@ -110,9 +110,18 @@ def run_download_job(
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 30)
 
-    pozos_map = load_pozos_map("data/instalacion_cod_obra_titular_P5.txt")
+    #pozos_map = load_pozos_map("data/instalacion_cod_obra_titular_P5.txt")
+    lista_to_pozos_map = {
+        "P5": "data/instalacion_cod_obra_titular_P5.txt",
+        "P12": "data/instalacion_cod_obra_titular_P12.txt",
+        "P17": "data/instalacion_cod_obra_titular_P17.txt",
+        "P22": "data/instalacion_cod_obra_titular_P22.txt",
+    }
+    pozos_map_path = lista_to_pozos_map.get(lista_id)
+    if not pozos_map_path:
+        raise ValueError(f"No hay mapa de pozos configurado para lista '{lista_id}'")
+    pozos_map = load_pozos_map(pozos_map_path)
     print("DEBUG pozos_map size:", len(pozos_map))
-    print("DEBUG sample:", pozos_map.get("OB-0302-127"))
 
     try:
         # initial check of what is missing
