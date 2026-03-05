@@ -159,7 +159,50 @@ def run_download_job(
             code = missing_codes.pop(0)
             expected_fn = expected_filename_for(code, startValue, endValue, today)
             print(f"\nProcessing code: {code} -> expect: {expected_fn}")
-
+            
+            if on_status:
+                on_status({
+                    "type": "pozo_update",
+                    "codigo": code,
+                    "estado": "En proceso",
+                    "mensaje": "",
+                })
+            if not anchors:
+                print(f"No result link found for {code} after search. Skipping for now.")
+                missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "No se encontró resultado en MOP",
+                    })
+                    continue
+            if not click_mediciones(driver, timeout=15):
+                print("Could not click Mediciones: not found/clickable.")
+                ...
+                missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "No se pudo abrir Mediciones",
+                    })
+                continue
+            except Exception as e:
+                print("Could not set period inputs:", e)
+                missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "Error al configurar fechas",
+                    })
+                continue
+            
+            
             driver.get(ROOT1)
 
             try:
@@ -183,11 +226,11 @@ def run_download_job(
                     "iframe[src*='google.com/recaptcha']",
                 )
                 if captcha_elements:
-                    print("🟢 CAPTCHA element detected (loaded).")
+                    print("CAPTCHA element detected (loaded).")
                     break
 
                 if attempt >= MAX_REFRESH:
-                    print("❌ CAPTCHA did not appear after max retries.")
+                    print("CAPTCHA did not appear after max retries.")
                     break
 
                 print("Captcha NOT found → refreshing page...")
@@ -195,7 +238,7 @@ def run_download_job(
                 time.sleep(2)
 
             # Wait until user SOLVES the CAPTCHA
-            print("⏳ Waiting for user to solve CAPTCHA...")
+            print("Waiting for user to solve CAPTCHA...")
             while True:
                 token_elems = driver.find_elements(
                     By.CSS_SELECTOR,
