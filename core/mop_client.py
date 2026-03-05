@@ -394,5 +394,7 @@ def run_download_job(
                 missing_codes.append(code)
 
         print("\nAll missing codes processed. Exiting.")
+        if on_status:
+            on_status({"type": "job_finished"})
     finally:
         driver.quit()
