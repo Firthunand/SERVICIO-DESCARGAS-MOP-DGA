@@ -110,7 +110,6 @@ def run_download_job(
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 30)
 
-    #pozos_map = load_pozos_map("data/instalacion_cod_obra_titular_P5.txt")
     lista_to_pozos_map = {
         "P5": "data/instalacion_cod_obra_titular_P5.txt",
         "P12": "data/instalacion_cod_obra_titular_P12.txt",
@@ -159,7 +158,8 @@ def run_download_job(
             code = missing_codes.pop(0)
             expected_fn = expected_filename_for(code, startValue, endValue, today)
             print(f"\nProcessing code: {code} -> expect: {expected_fn}")
-            
+
+            # Notificar inicio de procesamiento
             if on_status:
                 on_status({
                     "type": "pozo_update",
@@ -167,42 +167,7 @@ def run_download_job(
                     "estado": "En proceso",
                     "mensaje": "",
                 })
-            if not anchors:
-                print(f"No result link found for {code} after search. Skipping for now.")
-                missing_codes.append(code)
-                if on_status:
-                    on_status({
-                        "type": "pozo_update",
-                        "codigo": code,
-                        "estado": "Error",
-                        "mensaje": "No se encontró resultado en MOP",
-                    })
-                    continue
-            if not click_mediciones(driver, timeout=15):
-                print("Could not click Mediciones: not found/clickable.")
-                ...
-                missing_codes.append(code)
-                if on_status:
-                    on_status({
-                        "type": "pozo_update",
-                        "codigo": code,
-                        "estado": "Error",
-                        "mensaje": "No se pudo abrir Mediciones",
-                    })
-                continue
-            except Exception as e:
-                print("Could not set period inputs:", e)
-                missing_codes.append(code)
-                if on_status:
-                    on_status({
-                        "type": "pozo_update",
-                        "codigo": code,
-                        "estado": "Error",
-                        "mensaje": "Error al configurar fechas",
-                    })
-                continue
-            
-            
+
             driver.get(ROOT1)
 
             try:
@@ -333,6 +298,13 @@ def run_download_job(
                         f"Skipping for now."
                     )
                     missing_codes.append(code)
+                    if on_status:
+                        on_status({
+                            "type": "pozo_update",
+                            "codigo": code,
+                            "estado": "Error",
+                            "mensaje": "No se encontró resultado en MOP",
+                        })
                     continue
 
                 anchors[0].click()
@@ -346,7 +318,6 @@ def run_download_job(
             time.sleep(2)
             if not click_mediciones(driver, timeout=15):
                 print("Could not click Mediciones: not found/clickable.")
-                # debug artifacts
                 try:
                     driver.save_screenshot(f"debug_{code}_mediciones.png")
                     Path(f"debug_{code}_mediciones.html").write_text(
@@ -356,6 +327,13 @@ def run_download_job(
                 except Exception:
                     pass
                 missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "No se pudo abrir Mediciones",
+                    })
                 continue
             print("Clicked Mediciones")
 
@@ -398,6 +376,13 @@ def run_download_job(
             except Exception as e:
                 print("Could not set period inputs:", e)
                 missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "Error al configurar fechas",
+                    })
                 continue
 
             # Export
@@ -417,6 +402,13 @@ def run_download_job(
             except Exception as e:
                 print("Could not click Exportar a excel:", e)
                 missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "Error al exportar a Excel",
+                    })
                 continue
 
             print("Waiting for download...")
@@ -433,17 +425,37 @@ def run_download_job(
                     end=endValue,
                     pozos_map=pozos_map,
                 )
-
                 if moved:
                     print(f"Moved to: {moved}")
+                    if on_status:
+                        on_status({
+                            "type": "pozo_update",
+                            "codigo": code,
+                            "estado": "OK",
+                            "mensaje": f"Movido a {moved}",
+                        })
                 else:
                     print(
                         f"WARNING: No destination folder found for {code}. "
                         f"File left at: {renamed}"
                     )
+                    if on_status:
+                        on_status({
+                            "type": "pozo_update",
+                            "codigo": code,
+                            "estado": "Error",
+                            "mensaje": "No se encontró carpeta destino; quedó en descargas",
+                        })
             else:
                 print(f"Download for {code} did not complete in time.")
                 missing_codes.append(code)
+                if on_status:
+                    on_status({
+                        "type": "pozo_update",
+                        "codigo": code,
+                        "estado": "Error",
+                        "mensaje": "La descarga no se completó a tiempo",
+                    })
 
         print("\nAll missing codes processed. Exiting.")
         if on_status:

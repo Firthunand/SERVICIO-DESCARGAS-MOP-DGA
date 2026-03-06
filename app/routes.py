@@ -15,8 +15,25 @@ JOB_STATE = {
 }
 
 def on_job_status(event: dict):
-    """Callback llamado desde run_download_job (versión mínima)."""
-    if event.get("type") == "job_finished":
+    etype = event.get("type")
+
+    if etype == "pozo_update":
+        codigo = event.get("codigo")
+        nuevo_estado = event.get("estado")
+        mensaje = event.get("mensaje", "")
+
+        for item in JOB_STATE["detalles"]:
+            if item["codigo"] == codigo:
+                item["estado"] = nuevo_estado
+                item["mensaje"] = mensaje
+                break
+
+        # Recalcular procesados como los que ya no están en "Pendiente"
+        JOB_STATE["procesados"] = sum(
+            1 for item in JOB_STATE["detalles"] if item["estado"] != "Pendiente"
+        )
+
+    elif etype == "job_finished":
         JOB_STATE["status"] = "finalizado"
 
 bp = Blueprint("main", __name__)
