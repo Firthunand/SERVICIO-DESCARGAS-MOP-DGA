@@ -106,7 +106,13 @@ def run_download_job(
         "safebrowsing.enabled": True,
     }
     chrome_options.add_experimental_option("prefs", prefs)
-
+    
+    # Ajustes para Linux/servidor
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    ############################################################
+    
     driver = webdriver.Chrome(options=chrome_options)
     wait = WebDriverWait(driver, 30)
 
