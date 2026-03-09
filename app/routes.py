@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request,  redirect, url_for
+from flask import Blueprint, render_template, request,  redirect, url_for, jsonify
 from core.config import load_codes, load_config
 import threading
 from core.mop_client import run_download_job
@@ -115,3 +115,7 @@ def index():
         "index.html",
         job_state=JOB_STATE,
     )
+
+@bp.route("/api/estado-actual")
+def api_estado_actual():
+    return jsonify(JOB_STATE)

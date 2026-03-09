@@ -44,7 +44,7 @@
       <strong>Estado:</strong> {{ job_state.status }}
     </p>
 
-    <table class="table table-sm">
+    <table class="table table-sm" id="tabla-pozos">
       <thead>
         <tr>
           <th>Código OB</th>
@@ -71,4 +71,40 @@
     Aquí se integrará la vista del navegador remoto (noVNC) en una fase posterior.
   </div>
 </div>
+
+
+<script>
+  async function refrescarEstado() {
+    try {
+      const resp = await fetch("/api/estado-actual");
+      const data = await resp.json();
+
+      // Actualizar texto de estado
+      const estadoSpan = document.getElementById("estado-texto");
+      if (estadoSpan) {
+        estadoSpan.textContent = data.status;
+      }
+
+      // Actualizar tabla
+      const tbody = document.querySelector("#tabla-pozos tbody");
+      if (!tbody) return;
+
+      tbody.innerHTML = "";
+      (data.detalles || []).forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.codigo}</td>
+          <td>${item.estado}</td>
+          <td>${item.mensaje || ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error("Error refrescando estado", e);
+    }
+  }
+
+  // Polling cada 5 segundos
+  setInterval(refrescarEstado, 5000);
+</script>
 {% endblock %}
