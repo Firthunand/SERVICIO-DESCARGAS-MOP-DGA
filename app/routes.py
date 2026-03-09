@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request,  redirect, url_for, jsoni
 from core.config import load_codes, load_config
 import threading
 from core.mop_client import run_download_job
+from datetime import datetime
 
 
 JOB_STATE = {
@@ -38,29 +39,7 @@ def on_job_status(event: dict):
 
 bp = Blueprint("main", __name__)
 
-'''
-@bp.route("/", methods=["GET", "POST"])
-def index():
-    # Más adelante aquí leeremos lista + fechas y llamaremos a run_download_job
-    selected_list = None
-    start_date = None
-    end_date = None
 
-    if request.method == "POST":
-        selected_list = request.form.get("lista")
-        start_date = request.form.get("start_date")
-        end_date = request.form.get("end_date")
-        
-        # TODO: disparar job en una fase posterior
-
-    return render_template(
-        "index.html",
-        selected_list=selected_list,
-        start_date=start_date,
-        end_date=end_date,
-    )
-    '''
-    
 @bp.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -71,6 +50,9 @@ def index():
         selected_list = request.form.get("lista")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
+        
+        def to_ddmmyyyy(d: str) -> str:
+            return datetime.strptime(d,"%Y-%m-%d").strftime("%d-%m-%Y")
                 # Elegir archivo de lista según la selección
         lista_to_path = {
             "P5": "data/pozosADescargarP5.txt",
@@ -102,6 +84,23 @@ def index():
         JOB_STATE["procesados"] = 0
         
         cfg = load_config("data/config.json")
+        cfg["startValue"] = to_ddmmyyyy(start_date)
+        cfg["endValue"] = to_ddmmyyyy(end_date)
+        cfg["SUBFOLDER"] = selected_list
+        '''
+        cfg = {
+            "startValue": to_ddmmyyyy(start_date),
+            "endValue": to_ddmmyyyy(end_date),
+            "SUBFOLDER": selected_list,
+            "SHARED_ROOT_NAME": "Quantica",
+            "BASE_DEST_DIRS_REL": [
+                "OP_TECH_DATOS - General/2026/2036 - 2253 - Q INTERNO TELEMETRIA/E2_DESARROLLO/D_TELEMETRIA/EXTRACCIONES MOP/2366 - CASUB_Soporte P12",
+                "OP_TECH_DATOS - General/2026/2036 - 2253 - Q INTERNO TELEMETRIA/E2_DESARROLLO/D_TELEMETRIA/EXTRACCIONES MOP/2368 - CASUB_Soporte P17",
+                "OP_TECH_DATOS - General/2026/2036 - 2253 - Q INTERNO TELEMETRIA/E2_DESARROLLO/D_TELEMETRIA/EXTRACCIONES MOP/2367 - CASUB_Soporte P22",
+                "OP_TECH_DATOS - General/2026/2036 - 2253 - Q INTERNO TELEMETRIA/E2_DESARROLLO/D_TELEMETRIA/EXTRACCIONES MOP/2253 - COFANTI DGA 5 POZOS"
+            ]
+        }
+        '''
 
         # Lanzamos el job en un hilo en background
         t = threading.Thread(

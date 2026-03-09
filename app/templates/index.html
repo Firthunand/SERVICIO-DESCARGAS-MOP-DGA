@@ -41,7 +41,7 @@
     <p>
       <strong>Lista:</strong> {{ job_state.lista }}<br>
       <strong>Periodo:</strong> {{ job_state.start_date }} a {{ job_state.end_date }}<br>
-      <strong>Estado:</strong> {{ job_state.status }}
+      <strong>Estado:</strong> <span id="estado-texto">{{ job_state.status }}</span>
     </p>
 
     <table class="table table-sm" id="tabla-pozos">

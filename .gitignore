@@ -1,2 +1,8 @@
 /.cursor
 /env
+__pycache__/
+*.pyc
+*.log
+debug_*.png
+debug_*.html
+*.xls
