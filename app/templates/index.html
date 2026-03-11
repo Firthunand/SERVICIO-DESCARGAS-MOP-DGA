@@ -73,7 +73,7 @@
   <p class="text-muted small mb-2">Resuelve el CAPTCHA en la ventana inferior. Si no ves la zona del CAPTCHA, usa la barra de desplazamiento del recuadro.</p>
   <iframe
     id="vnc-iframe"
-    src="http://192.168.150.248:6080/vnc.html?autoconnect=1&resize=scale"
+    src="{{ novnc_url|default('http://127.0.0.1:6080') }}/vnc.html?autoconnect=1&resize=scale"
     style="width: 100%; min-height: 720px; height: 75vh; border: 1px solid #ccc; border-radius: 4px; display: block;"
     title="Vista remota para resolver CAPTCHA"
   ></iframe>

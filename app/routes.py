@@ -47,7 +47,9 @@ def index():
     if request.method == "POST":
         if JOB_STATE["status"] == "en_curso":
             # Ya hay un job corriendo; no lanzamos otro
-            return render_template("index.html", job_state=JOB_STATE)
+            cfg = load_config("data/config.json")
+            novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
+            return render_template("index.html", job_state=JOB_STATE, novnc_url=novnc_url)
         
         selected_list = request.form.get("lista")
         start_date = request.form.get("start_date")
@@ -68,7 +70,9 @@ def index():
             # Caso defensivo: lista sin archivo asociado
             JOB_STATE["status"] = "idle"
             JOB_STATE["detalles"] = []
-            return render_template("index.html", job_state=JOB_STATE)
+            cfg = load_config("data/config.json")
+            novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
+            return render_template("index.html", job_state=JOB_STATE, novnc_url=novnc_url)
 
         codes = load_codes(path_lista)
 
@@ -113,9 +117,12 @@ def index():
         )
         t.start()
         return redirect(url_for("main.index"))
+    cfg = load_config("data/config.json")
+    novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
     return render_template(
         "index.html",
         job_state=JOB_STATE,
+        novnc_url=novnc_url,
     )
 
 @bp.route("/api/estado-actual")
