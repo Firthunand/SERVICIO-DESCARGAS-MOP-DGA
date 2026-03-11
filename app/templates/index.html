@@ -42,6 +42,9 @@
       <strong>Lista:</strong> {{ job_state.lista }}<br>
       <strong>Periodo:</strong> {{ job_state.start_date }} a {{ job_state.end_date }}<br>
       <strong>Estado:</strong> <span id="estado-texto">{{ job_state.status }}</span>
+      {% if job_state.download_path %}
+      <br><strong>Carpeta en el servidor:</strong> <code id="ruta-descarga" class="bg-light px-1">{{ job_state.download_path }}</code>
+      {% endif %}
     </p>
 
     <table class="table table-sm" id="tabla-pozos">
@@ -87,6 +90,11 @@
       const estadoSpan = document.getElementById("estado-texto");
       if (estadoSpan) {
         estadoSpan.textContent = data.status;
+      }
+      // Actualizar ruta de descarga si existe
+      const rutaDescarga = document.getElementById("ruta-descarga");
+      if (rutaDescarga && data.download_path) {
+        rutaDescarga.textContent = data.download_path;
       }
 
       // Actualizar tabla

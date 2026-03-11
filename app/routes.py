@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request,  redirect, url_for, jsonify
 from core.config import load_codes, load_config
+from core.downloads import downloads_folder_for_subfolder
 import threading
 from core.mop_client import run_download_job
 from datetime import datetime
@@ -12,7 +13,8 @@ JOB_STATE = {
     "end_date": None,
     "total_pozos": 0,
     "procesados": 0,
-    "detalles": [],          # luego será una lista de dicts por pozo
+    "detalles": [],          # lista de dicts por pozo
+    "download_path": None,   # ruta en el servidor donde se guardan los .xls
 }
 
 def on_job_status(event: dict):
@@ -82,7 +84,8 @@ def index():
         ]
         JOB_STATE["total_pozos"] = len(JOB_STATE["detalles"])
         JOB_STATE["procesados"] = 0
-        
+        JOB_STATE["download_path"] = str(downloads_folder_for_subfolder(selected_list).resolve())
+
         cfg = load_config("data/config.json")
         cfg["startValue"] = to_ddmmyyyy(start_date)
         cfg["endValue"] = to_ddmmyyyy(end_date)
