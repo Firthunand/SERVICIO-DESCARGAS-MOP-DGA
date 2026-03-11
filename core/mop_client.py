@@ -106,20 +106,18 @@ def run_download_job(
         "safebrowsing.enabled": True,
     }
     chrome_options.add_experimental_option("prefs", prefs)
-    
-    # Ajustes para Linux/servidor
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Ajustes para Linux/servidor (sin --headless para que se vea en noVNC)
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.add_argument("driver.set_page_load_timeout(600)")
-    ############################################################
-    
+    chrome_options.add_argument("--window-position=0,0")
+    chrome_options.add_argument("--no-first-run")
+    chrome_options.add_argument("--no-default-browser-check")
+
     driver = webdriver.Chrome(options=chrome_options)
+    driver.set_page_load_timeout(600)
     wait = WebDriverWait(driver, 30)
 
     lista_to_pozos_map = {
