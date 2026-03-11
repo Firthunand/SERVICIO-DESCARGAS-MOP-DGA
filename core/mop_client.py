@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
+import os
 import time
 
 from selenium import webdriver
@@ -72,6 +73,9 @@ def run_download_job(
     Ejecuta el flujo completo de descargas para una lista de códigos.
     on_status se usará luego para reportar estado a la web.
     """
+    # Asegurar que Chrome use el display virtual (Xvfb :99) en el servidor
+    os.environ.setdefault("DISPLAY", ":99")
+
     startValue = cfg["startValue"]
     endValue = cfg["endValue"]
     SUBFOLDER = cfg["SUBFOLDER"]
