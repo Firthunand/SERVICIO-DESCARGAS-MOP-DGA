@@ -216,6 +216,78 @@ Dejar esa terminal abierta o ejecutarla en segundo plano con `&`.
 
 ---
 
+## Comprobar si los puertos entran en conflicto
+
+La app usa estos puertos:
+
+| Puerto | Uso |
+|--------|-----|
+| **5000** | Aplicación Flask (formulario y estado). |
+| **6080** | noVNC (navegador remoto para el CAPTCHA). |
+| **5900** | x11vnc (interno; noVNC se conecta a él desde el mismo servidor). |
+
+### Ver qué está usando cada puerto
+
+En el servidor ejecuta:
+
+```bash
+# Ver qué proceso escucha en el puerto 5000 (Flask)
+sudo ss -tlnp | grep :5000
+# o
+sudo lsof -i :5000
+
+# Ver qué proceso escucha en el puerto 6080 (noVNC)
+sudo ss -tlnp | grep :6080
+sudo lsof -i :6080
+
+# Ver qué proceso escucha en el puerto 5900 (x11vnc)
+sudo ss -tlnp | grep :5900
+sudo lsof -i :5900
+```
+
+**Interpretación:**
+
+- Si **no sale ninguna línea**: el puerto está libre, no hay conflicto.
+- Si **sale una línea** con otro proceso (por ejemplo `systemd` en 5000, u otra app en 6080): ese puerto ya está ocupado y puede haber conflicto cuando arranques la app.
+
+**Ver todos los puertos en escucha (TCP):**
+
+```bash
+sudo ss -tlnp
+```
+
+Busca en la columna de puertos las filas que muestren `:5000`, `:6080` o `:5900`.
+
+### Si hay conflicto: cambiar los puertos
+
+**1. Cambiar el puerto de Flask (por defecto 5000)**
+
+Editar `run_flask.py` y usar otro puerto (por ejemplo 5001):
+
+```python
+app.run(host='0.0.0.0', port=5001, debug=False)
+```
+
+Quien acceda a la app usará `http://<IP>:5001`.
+
+**2. Cambiar el puerto de noVNC (por defecto 6080)**
+
+- Al arrancar noVNC, usa otro puerto, por ejemplo 6081:
+  ```bash
+  ~/noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6081
+  ```
+- En `data/config.json` actualiza la URL con el nuevo puerto:
+  ```json
+  "NOVNC_URL": "http://3.147.102.192:6081"
+  ```
+- Abre el nuevo puerto en el firewall si usas UFW: `sudo ufw allow 6081/tcp`.
+
+**3. Cambiar el puerto de x11vnc (por defecto 5900)**
+
+Solo hace falta si 5900 está ocupado. Editar `scripts/start_servicio.sh`: en la línea de `x11vnc` cambiar `-rfbport 5900` por `-rfbport 5901`. Y arrancar noVNC apuntando a 5901: `--vnc localhost:5901`.
+
+---
+
 ## Paso 9: Abrir puertos en el firewall (si hay UFW)
 
 Si el servidor usa UFW:
