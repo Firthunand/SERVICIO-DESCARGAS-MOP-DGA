@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
 import os
+import threading
 import time
 
 from selenium import webdriver
@@ -68,6 +69,7 @@ def run_download_job(
     codes: list[str],
     lista_id: str,  # P5, P12, P17, P22
     on_status: Optional[Callable[[dict], None]] = None,
+    stop_event: Optional[threading.Event] = None,
 ):
     """
     Ejecuta el flujo completo de descargas para una lista de códigos.
@@ -176,7 +178,12 @@ def run_download_job(
 
         print(f"Missing codes: {len(missing_codes)}")
 
+        cancelled = False
         while missing_codes:
+            if stop_event and stop_event.is_set():
+                print("Detención solicitada por el usuario.")
+                cancelled = True
+                break
             code = missing_codes.pop(0)
             expected_fn = expected_filename_for(code, startValue, endValue, today)
             print(f"\nProcessing code: {code} -> expect: {expected_fn}")
@@ -205,6 +212,9 @@ def run_download_job(
             MAX_REFRESH = 30
             attempt = 0
             while True:
+                if stop_event and stop_event.is_set():
+                    cancelled = True
+                    break
                 attempt += 1
                 print(f"Checking for CAPTCHA (attempt {attempt}/{MAX_REFRESH})")
 
@@ -224,9 +234,15 @@ def run_download_job(
                 driver.refresh()
                 time.sleep(2)
 
+            if cancelled:
+                break
+
             # Wait until user SOLVES the CAPTCHA
             print("Waiting for user to solve CAPTCHA...")
             while True:
+                if stop_event and stop_event.is_set():
+                    cancelled = True
+                    break
                 token_elems = driver.find_elements(
                     By.CSS_SELECTOR,
                     "textarea[name='g-recaptcha-response'], "
@@ -246,7 +262,10 @@ def run_download_job(
                     break
 
                 print("User has NOT solved CAPTCHA yet...")
-                time.sleep(10)
+                time.sleep(5)
+
+            if cancelled:
+                break
 
             print("Continuing automation...")
 
@@ -481,8 +500,8 @@ def run_download_job(
                         "mensaje": "La descarga no se completó a tiempo",
                     })
 
-        print("\nAll missing codes processed. Exiting.")
+        print("\nAll missing codes processed. Exiting." if not cancelled else "\nDescarga detenida por el usuario.")
         if on_status:
-            on_status({"type": "job_finished"})
+            on_status({"type": "job_cancelled" if cancelled else "job_finished"})
     finally:
         driver.quit()

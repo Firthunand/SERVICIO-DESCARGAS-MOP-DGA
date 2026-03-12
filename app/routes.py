@@ -28,8 +28,11 @@ def _update_session_claim(viewer_id: str | None) -> bool:
     return viewer_id is not None and ACTIVE_VIEWER_ID == viewer_id
 
 
+# Evento para solicitar detener la descarga en curso
+STOP_REQUESTED = threading.Event()
+
 JOB_STATE = {
-    "status": "idle",        # idle | en_curso | finalizado
+    "status": "idle",        # idle | en_curso | finalizado | cancelado
     "lista": None,
     "start_date": None,
     "end_date": None,
@@ -60,6 +63,8 @@ def on_job_status(event: dict):
 
     elif etype == "job_finished":
         JOB_STATE["status"] = "finalizado"
+    elif etype == "job_cancelled":
+        JOB_STATE["status"] = "cancelado"
 
 bp = Blueprint("main", __name__)
 
@@ -147,10 +152,11 @@ def index():
         }
         '''
 
-        # Lanzamos el job en un hilo en background
+        STOP_REQUESTED.clear()
         t = threading.Thread(
             target=run_download_job,
             args=(cfg, codes, selected_list, on_job_status),
+            kwargs={"stop_event": STOP_REQUESTED},
             daemon=True,
         )
         t.start()
@@ -176,3 +182,10 @@ def api_estado_actual():
     viewer_id = request.cookies.get("viewer_id")
     session_owner = _update_session_claim(viewer_id)
     return jsonify({**JOB_STATE, "session_owner": session_owner})
+
+
+@bp.route("/api/detener-descarga", methods=["POST"])
+def api_detener_descarga():
+    if JOB_STATE["status"] == "en_curso":
+        STOP_REQUESTED.set()
+    return jsonify({"ok": True})

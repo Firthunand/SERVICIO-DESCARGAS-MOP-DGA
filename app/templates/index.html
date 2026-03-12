@@ -47,6 +47,9 @@
       <br><strong>Carpeta en el servidor:</strong> <code id="ruta-descarga" class="bg-light px-1">{{ job_state.download_path }}</code>
       {% endif %}
     </p>
+    <p id="detener-descarga-wrap" class="mb-2" style="display: {% if job_state.status == 'en_curso' %}block{% else %}none{% endif %};">
+      <button type="button" id="btn-detener-descarga" class="btn btn-danger">Detener descarga</button>
+    </p>
 
     <table class="table table-sm" id="tabla-pozos">
       <thead>
@@ -95,6 +98,10 @@
       if (estadoSpan) {
         estadoSpan.textContent = data.status;
       }
+      const detenerWrap = document.getElementById("detener-descarga-wrap");
+      if (detenerWrap) {
+        detenerWrap.style.display = data.status === "en_curso" ? "block" : "none";
+      }
       const rutaDescarga = document.getElementById("ruta-descarga");
       if (rutaDescarga && data.download_path) {
         rutaDescarga.textContent = data.download_path;
@@ -119,6 +126,19 @@
   }
 
   setInterval(refrescarEstado, 5000);
+
+  document.getElementById("btn-detener-descarga")?.addEventListener("click", async function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = "Deteniendo…";
+    try {
+      await fetch("/api/detener-descarga", { method: "POST", credentials: "same-origin" });
+    } catch (e) {
+      console.error(e);
+    }
+    btn.textContent = "Detener descarga";
+    btn.disabled = false;
+  });
 </script>
 {% else %}
 <div class="alert alert-warning" role="alert">
