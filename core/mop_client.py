@@ -26,15 +26,6 @@ ROOT1 = "https://snia.mop.gob.cl/cExtracciones2/#/busquedaPublica"
 CLICK_NAV_WAIT = 8
 
 
-def _ddmmyyyy_to_iso(d: str) -> str:
-    """Convierte DD-MM-YYYY a YYYY-MM-DD para evitar ambigüedad MM/DD en el portal."""
-    try:
-        dt = datetime.strptime(d.strip(), "%d-%m-%Y")
-        return dt.strftime("%Y-%m-%d")
-    except ValueError:
-        return d
-
-
 def wait_page_loaded(driver, timeout=30):
     WebDriverWait(driver, timeout).until(
         lambda d: d.execute_script("return document.readyState") == "complete"
@@ -374,11 +365,10 @@ def run_download_job(
                 driver.execute_script(
                     "arguments[0].scrollIntoView(true);", start_el
                 )
-                # Enviar fechas en YYYY-MM-DD para evitar que el portal interprete 11-03 como 3-Nov (MM/DD)
-                start_iso = _ddmmyyyy_to_iso(startValue)
-                end_iso = _ddmmyyyy_to_iso(endValue)
+                # El portal usa máscara DD/MM/YYYY: hay que enviar en ese orden (con / o -)
+                # Envío DD-MM-YYYY para que se vea bien en pantalla (01-03-2026, 11-03-2026)
                 start_el.clear()
-                start_el.send_keys(start_iso)
+                start_el.send_keys(startValue)
                 driver.execute_script(
                     """
                     arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
@@ -388,7 +378,7 @@ def run_download_job(
                 )
 
                 end_el.clear()
-                end_el.send_keys(end_iso)
+                end_el.send_keys(endValue)
                 driver.execute_script(
                     """
                     arguments[0].dispatchEvent(new Event('input', { bubbles: true }));
@@ -398,7 +388,7 @@ def run_download_job(
                 )
 
                 time.sleep(2)
-                print(f"Filled dates {start_iso} -> {end_iso} (envío en ISO para evitar error de validación)")
+                print(f"Filled dates {startValue} -> {endValue}")
             except Exception as e:
                 print("Could not set period inputs:", e)
                 missing_codes.append(code)
