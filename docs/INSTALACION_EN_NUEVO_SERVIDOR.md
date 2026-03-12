@@ -112,6 +112,25 @@ Para tener noVNC disponible siempre, se puede dejar este comando en un script o 
 
 ---
 
+## Paso 4.1: Generar locale español (Chrome y portal MOP)
+
+Para que Chrome y el portal MOP usen español (calendario y validación de fechas en formato DD/MM), el servidor debe tener el locale **es_CL.UTF-8** disponible. No cambia el locale por defecto del servidor; solo lo deja instalado para que el proceso de la app lo use.
+
+```bash
+sudo locale-gen es_CL.UTF-8
+sudo update-locale
+```
+
+Comprobar:
+
+```bash
+locale -a | grep es
+```
+
+Debe aparecer `es_CL.UTF-8`. La aplicación configurará Chrome para usar este locale al lanzar las descargas.
+
+---
+
 ## Paso 5: Copiar el proyecto al servidor
 
 Desde tu PC (donde está el código), por SCP o rsync:
@@ -317,6 +336,13 @@ Desde cualquier PC en la red (o con acceso a la IP del servidor):
 
 ---
 
+## Comportamiento para el usuario (sesión única y detener descarga)
+
+- **Una sola sesión activa:** Solo una persona puede usar la aplicación a la vez. Si otro usuario abre la URL mientras alguien más está conectado, verá el mensaje "Sesión en uso" y deberá esperar o pulsar "Reintentar" hasta que la sesión quede libre (p. ej. cuando el otro cierre la pestaña y pasen unos segundos).
+- **Detener descarga:** Durante una descarga en curso, el usuario puede pulsar el botón rojo "Detener descarga" para interrumpir el proceso. Los archivos ya descargados se conservan; el estado pasará a "cancelado". Ver `docs/USO_APLICATIVO.md` para la guía de uso completa.
+
+---
+
 ## Dejar todo corriendo de forma permanente (opcional)
 
 - **Flask + Xvfb + Openbox + x11vnc:** se puede crear un servicio systemd que ejecute `scripts/start_servicio.sh` al arrancar el servidor (o dividir en varios servicios: uno para Xvfb, otro para Flask, etc.).
@@ -334,6 +360,7 @@ Si quieres, en un siguiente paso se puede detallar el contenido exacto de los ar
 | 2 | `sudo apt update && sudo apt install -y python3 python3-pip python3-venv unzip wget`. |
 | 3 | Instalar Chrome (o Chromium) y ChromeDriver. |
 | 4 | Instalar Xvfb, Openbox, x11vnc; clonar noVNC y levantar `novnc_proxy` en 6080. |
+| 4.1 | Generar locale español: `sudo locale-gen es_CL.UTF-8` y `sudo update-locale` (para Chrome y validación de fechas MOP). |
 | 5 | Copiar el proyecto al servidor (SCP o git clone). |
 | 6 | Crear venv, activar y `pip install -r requirements.txt`. |
 | 7 | En `data/config.json` poner `"NOVNC_URL": "http://3.147.102.192:6080"`. |
