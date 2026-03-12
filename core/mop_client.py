@@ -75,6 +75,10 @@ def run_download_job(
     """
     # Asegurar que Chrome use el display virtual (Xvfb :99) en el servidor
     os.environ.setdefault("DISPLAY", ":99")
+    # Que solo el Chrome que lanza este proceso use español (hereda al ser hijo); no cambia el default del servidor.
+    # En el servidor debe existir el locale: sudo locale-gen es_CL.UTF-8 && sudo update-locale
+    os.environ["LANG"] = "es_CL.UTF-8"
+    os.environ["LC_TIME"] = "es_CL.UTF-8"
 
     startValue = cfg["startValue"]
     endValue = cfg["endValue"]
@@ -108,6 +112,8 @@ def run_download_job(
         "download.prompt_for_download": False,
         "download.directory_upgrade": True,
         "safebrowsing.enabled": True,
+        # Forzar español para el contenido web (calendario y validación de fechas DD/MM en el portal MOP)
+        "intl.accept_languages": "es-CL,es,en",
     }
     chrome_options.add_experimental_option("prefs", prefs)
 
@@ -119,7 +125,7 @@ def run_download_job(
     chrome_options.add_argument("--window-position=0,0")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-default-browser-check")
-    # Solo Chrome en español (evita validación MM/DD en el portal MOP); no cambia el servidor
+    # Idioma de la interfaz y del contenido (evita validación MM/DD en el portal MOP)
     chrome_options.add_argument("--lang=es-CL")
 
     driver = webdriver.Chrome(options=chrome_options)
