@@ -1,0 +1,27 @@
+# Servicio systemd para montar OneDrive con rclone (app MOP DGA)
+# Copiar a /etc/systemd/system/ y ajustar User, rutas y nombre del remoto si aplica.
+#
+# Uso:
+#   sudo cp scripts/systemd/rclone-onedrive.service /etc/systemd/system/
+#   sudo nano /etc/systemd/system/rclone-onedrive.service   # ajustar si hace falta
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable rclone-onedrive
+#   sudo systemctl start rclone-onedrive
+
+[Unit]
+Description=Rclone mount OneDrive (Quantica) para app MOP DGA
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=datos
+# Montar la carpeta "Quantica" del remoto onedrive en /home/datos/Quantica
+# Si tu estructura está en la raíz de OneDrive, cambia "onedrive:Quantica" por "onedrive:"
+ExecStart=/usr/bin/rclone mount onedrive:Quantica /home/datos/Quantica --vfs-cache-mode full --dir-cache-time 5m
+ExecStop=-/usr/bin/umount /home/datos/Quantica
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
