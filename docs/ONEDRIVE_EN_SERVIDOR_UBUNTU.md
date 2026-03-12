@@ -1,6 +1,9 @@
 # OneDrive en el servidor Ubuntu – Guía paso a paso
 
-Objetivo: que los archivos descargados por la app se muevan a las **carpetas compartidas de OneDrive** y queden disponibles para todos los usuarios.
+> **Nota:** Este proyecto **ya no utiliza OneDrive**. Los archivos se dejan en una **carpeta local del servidor**; un script externo se encarga de subir la información a una base de datos. Ver **docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md**.  
+> La guía siguiente se mantiene por referencia por si en el futuro se requiriera de nuevo sincronización con OneDrive.
+
+Objetivo (referencia): que los archivos descargados por la app se muevan a las **carpetas compartidas de OneDrive** y queden disponibles para todos los usuarios.
 
 La app ya mueve los archivos a rutas definidas en `data/config.json`. Esas rutas deben ser una carpeta local que **sincronice con OneDrive** (o esté montada como OneDrive). Esta guía explica cómo dejarlo listo.
 

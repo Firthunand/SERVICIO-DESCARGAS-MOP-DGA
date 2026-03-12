@@ -177,7 +177,7 @@ Si en este servidor la IP pública es otra o usas nombre de dominio, usa esa URL
 
 Revisar también (si aplica):
 
-- **SHARED_ROOT_NAME** y **BASE_DEST_DIRS_REL**: deben coincidir con la ruta donde quieres guardar los archivos (por ejemplo carpeta local que luego sincronices con OneDrive, o montaje rclone). Ver `docs/ONEDRIVE_RCLONE_PASO_A_PASO.md` si usas OneDrive con rclone.
+- **SHARED_ROOT_NAME** y **BASE_DEST_DIRS_REL**: definen la **carpeta local en el servidor** donde se mueven los archivos (no se usa OneDrive; un script externo leerá esa carpeta para subir a una base de datos). Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.
 
 ---
 
@@ -341,4 +341,4 @@ Si quieres, en un siguiente paso se puede detallar el contenido exacto de los ar
 | 9 | Abrir puertos 5000 y 6080 en el firewall si aplica. |
 | 10 | Probar en el navegador: http://3.147.102.192:5000 y, si hace falta, http://3.147.102.192:6080/vnc.html. |
 
-(Opcional) Configurar OneDrive con rclone según `docs/ONEDRIVE_RCLONE_PASO_A_PASO.md` para que los archivos se guarden en las carpetas compartidas.
+(Opcional) Crear en el servidor la estructura de carpetas destino (`SHARED_ROOT_NAME` + `BASE_DEST_DIRS_REL`) para que la app mueva ahí los .xls; un script externo puede leer esa carpeta para subir a una base de datos. Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.

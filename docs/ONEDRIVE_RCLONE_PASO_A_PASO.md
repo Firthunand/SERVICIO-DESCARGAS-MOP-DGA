@@ -1,5 +1,7 @@
 # OneDrive con rclone (Opción B) – Paso a paso
 
+> **Nota:** Este proyecto **ya no utiliza OneDrive**. Los archivos se dejan en una **carpeta local del servidor**; un script externo sube la información a una base de datos. Ver **docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md**. Esta guía se mantiene por referencia.
+
 Guía para montar las carpetas compartidas de OneDrive en el servidor Ubuntu y que la app MOP guarde ahí los archivos descargados.
 
 ---
