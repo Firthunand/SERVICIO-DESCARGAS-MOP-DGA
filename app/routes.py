@@ -1,9 +1,31 @@
-from flask import Blueprint, render_template, request,  redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
 from core.config import load_codes, load_config
 from core.downloads import downloads_folder_for_subfolder
 import threading
+import time
+import uuid
 from core.mop_client import run_download_job
 from datetime import datetime
+
+# Una sola sesión activa: quien tiene la sesión puede usar la app; los demás ven "Sesión en uso"
+SESSION_TIMEOUT_SEC = 45
+ACTIVE_VIEWER_ID = None
+LAST_HEARTBEAT = None
+
+
+def _update_session_claim(viewer_id: str | None) -> bool:
+    """Actualiza heartbeat o asigna sesión si está libre/expirada. Retorna True si viewer_id es el dueño."""
+    global ACTIVE_VIEWER_ID, LAST_HEARTBEAT
+    now = time.time()
+    if ACTIVE_VIEWER_ID is not None and (now - LAST_HEARTBEAT) > SESSION_TIMEOUT_SEC:
+        ACTIVE_VIEWER_ID = None
+    if viewer_id:
+        if ACTIVE_VIEWER_ID is None:
+            ACTIVE_VIEWER_ID = viewer_id
+            LAST_HEARTBEAT = now
+        elif ACTIVE_VIEWER_ID == viewer_id:
+            LAST_HEARTBEAT = now
+    return viewer_id is not None and ACTIVE_VIEWER_ID == viewer_id
 
 
 JOB_STATE = {
@@ -44,13 +66,24 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/", methods=["GET", "POST"])
 def index():
+    viewer_id = request.cookies.get("viewer_id")
+    if not viewer_id:
+        viewer_id = str(uuid.uuid4())
+
     if request.method == "POST":
+        if not _update_session_claim(viewer_id):
+            return redirect(url_for("main.index"))
         if JOB_STATE["status"] == "en_curso":
             # Ya hay un job corriendo; no lanzamos otro
             cfg = load_config("data/config.json")
             novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
-            return render_template("index.html", job_state=JOB_STATE, novnc_url=novnc_url)
-        
+            return render_template(
+                "index.html",
+                job_state=JOB_STATE,
+                novnc_url=novnc_url,
+                session_owner=True,
+            )
+
         selected_list = request.form.get("lista")
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
@@ -72,7 +105,12 @@ def index():
             JOB_STATE["detalles"] = []
             cfg = load_config("data/config.json")
             novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
-            return render_template("index.html", job_state=JOB_STATE, novnc_url=novnc_url)
+            return render_template(
+                "index.html",
+                job_state=JOB_STATE,
+                novnc_url=novnc_url,
+                session_owner=True,
+            )
 
         codes = load_codes(path_lista)
 
@@ -117,14 +155,24 @@ def index():
         )
         t.start()
         return redirect(url_for("main.index"))
+
+    session_owner = _update_session_claim(viewer_id)
     cfg = load_config("data/config.json")
     novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
-    return render_template(
-        "index.html",
-        job_state=JOB_STATE,
-        novnc_url=novnc_url,
+    resp = make_response(
+        render_template(
+            "index.html",
+            job_state=JOB_STATE,
+            novnc_url=novnc_url,
+            session_owner=session_owner,
+        )
     )
+    if not request.cookies.get("viewer_id"):
+        resp.set_cookie("viewer_id", viewer_id, max_age=60 * 60 * 24 * 365)
+    return resp
 
 @bp.route("/api/estado-actual")
 def api_estado_actual():
-    return jsonify(JOB_STATE)
+    viewer_id = request.cookies.get("viewer_id")
+    session_owner = _update_session_claim(viewer_id)
+    return jsonify({**JOB_STATE, "session_owner": session_owner})
