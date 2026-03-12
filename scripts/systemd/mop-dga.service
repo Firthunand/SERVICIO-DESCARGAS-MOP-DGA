@@ -1,0 +1,33 @@
+# Servicio systemd para la aplicación MOP DGA (Xvfb + Openbox + x11vnc + Flask)
+# Copiar a /etc/systemd/system/ y ajustar User y PROYECTO_ROOT según el servidor.
+#
+# Uso:
+#   sudo cp scripts/systemd/mop-dga.service /etc/systemd/system/
+#   sudo nano /etc/systemd/system/mop-dga.service   # ajustar User y rutas
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable mop-dga
+#   sudo systemctl start mop-dga
+#
+# Ver estado:  sudo systemctl status mop-dga
+# Ver logs:     journalctl -u mop-dga -f
+
+[Unit]
+Description=Servicio descargas MOP DGA (Xvfb, Openbox, x11vnc, Flask)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=datos
+Group=datos
+# Ajustar PROYECTO_ROOT al camino real del proyecto en el servidor
+WorkingDirectory=/home/datos/SERVICIO-DESCARGAS-MOP-DGA
+ExecStart=/home/datos/SERVICIO-DESCARGAS-MOP-DGA/scripts/start_servicio.sh
+Restart=on-failure
+RestartSec=10
+# Al parar el servicio, terminar todos los procesos del grupo (Xvfb, Openbox, x11vnc, Flask)
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
