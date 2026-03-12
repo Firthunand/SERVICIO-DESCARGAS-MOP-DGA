@@ -119,6 +119,8 @@ def run_download_job(
     chrome_options.add_argument("--window-position=0,0")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-default-browser-check")
+    # Solo Chrome en español (evita validación MM/DD en el portal MOP); no cambia el servidor
+    chrome_options.add_argument("--lang=es-CL")
 
     driver = webdriver.Chrome(options=chrome_options)
     driver.set_page_load_timeout(600)
