@@ -64,5 +64,5 @@ echo ""
 echo "Iniciando aplicación con Gunicorn en $PROYECTO_ROOT"
 # Usar un solo worker para compartir estado en memoria (JOB_STATE, sesión única, etc.)
 # y permitir varios hilos dentro del mismo proceso.
-exec gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run_flask:app
+exec /home/ubuntu/miniconda3/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run_flask:app
 
