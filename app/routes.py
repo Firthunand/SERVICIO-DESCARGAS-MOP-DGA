@@ -188,4 +188,7 @@ def api_estado_actual():
 def api_detener_descarga():
     if JOB_STATE["status"] == "en_curso":
         STOP_REQUESTED.set()
+        # Stop "duro": reflejar la cancelación de inmediato en la UI,
+        # aunque el hilo de Selenium tarde unos segundos en terminar.
+        JOB_STATE["status"] = "cancelado"
     return jsonify({"ok": True})
