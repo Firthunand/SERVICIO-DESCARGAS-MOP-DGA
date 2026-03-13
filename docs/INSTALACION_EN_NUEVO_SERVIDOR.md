@@ -348,78 +348,9 @@ Desde cualquier PC en la red (o con acceso a la IP del servidor):
 - **Flask + Xvfb + Openbox + x11vnc:** se puede crear un servicio systemd que ejecute `scripts/start_servicio.sh` al arrancar el servidor (o dividir en varios servicios: uno para Xvfb, otro para Flask, etc.).
 - **noVNC:** crear un servicio systemd que ejecute `~/noVNC/utils/novnc_proxy --vnc localhost:5900 --listen 6080` al arrancar.
 
-**Importante:** Cuando la aplicación corre como servicio (systemd), **no depende de tu sesión SSH ni de las terminales**. Puedes cerrar la conexión SSH y cerrar todas las terminales: la app seguirá activa y cualquier usuario que ingrese a la URL podrá usarla con normalidad. Los procesos los gestiona el sistema, no tu sesión.
+**Importante:** Cuando la aplicación corre como servicio (systemd) o con Gunicorn bajo systemd, **no depende de tu sesión SSH ni de las terminales**. Puedes cerrar la conexión SSH y cerrar todas las terminales: la app seguirá activa y cualquier usuario que ingrese a la URL podrá usarla con normalidad. Los procesos los gestiona el sistema, no tu sesión.
 
----
-
-## Paso 11 (opcional): Dejar la aplicación corriendo con systemd
-
-Para que la app y noVNC arranquen solos al encender el servidor y sigan corriendo aunque cierres SSH, configura dos servicios systemd usando los archivos que vienen en el proyecto.
-
-### 11.1 Copiar las unidades de systemd
-
-En el servidor, desde la raíz del proyecto (sustituir `datos` y la ruta si es distinta):
-
-```bash
-sudo cp scripts/systemd/mop-dga.service /etc/systemd/system/
-sudo cp scripts/systemd/novnc.service /etc/systemd/system/
-```
-
-### 11.2 Ajustar rutas y usuario en los servicios
-
-Editar el servicio de la app y poner el **usuario** y la **ruta real** del proyecto:
-
-```bash
-sudo nano /etc/systemd/system/mop-dga.service
-```
-
-Cambiar `User=`, `Group=`, `WorkingDirectory` y la ruta en `ExecStart` si no usas el usuario `datos` ni la ruta `/home/datos/SERVICIO-DESCARGAS-MOP-DGA`. Ejemplo si el proyecto está en `/opt/mop-dga` y el usuario es `www-data`:
-
-```ini
-User=www-data
-Group=www-data
-WorkingDirectory=/opt/mop-dga
-ExecStart=/opt/mop-dga/scripts/start_servicio.sh
-```
-
-Editar el servicio de noVNC y poner la **ruta real** donde está noVNC:
-
-```bash
-sudo nano /etc/systemd/system/novnc.service
-```
-
-Cambiar `User`, `Group`, `WorkingDirectory` y la ruta en `ExecStart` si no es `/home/datos/noVNC`. Ejemplo si noVNC está en `/home/datos/noVNC` no hace falta cambiar nada.
-
-### 11.3 Activar y arrancar los servicios
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable mop-dga
-sudo systemctl enable novnc
-sudo systemctl start mop-dga
-sudo systemctl start novnc
-```
-
-### 11.4 Comprobar que están corriendo
-
-```bash
-sudo systemctl status mop-dga
-sudo systemctl status novnc
-```
-
-Deben aparecer como `active (running)`. Probar en el navegador: `http://<IP-del-servidor>:5000` y, si aplica, `http://<IP-del-servidor>:6080/vnc.html`.
-
-### 11.5 Comandos útiles
-
-| Acción | Comando |
-|--------|--------|
-| Ver estado | `sudo systemctl status mop-dga` |
-| Ver logs en vivo | `journalctl -u mop-dga -f` |
-| Reiniciar la app | `sudo systemctl restart mop-dga` |
-| Parar la app | `sudo systemctl stop mop-dga` |
-| Que no arranque al boot | `sudo systemctl disable mop-dga` |
-
-Tras esto, puedes cerrar SSH: la app y noVNC seguirán activos y se iniciarán de nuevo al reiniciar el servidor.
+Si quieres, en un siguiente paso se puede detallar el contenido exacto de los archivos `.service` para este servidor.
 
 ---
 
@@ -438,6 +369,5 @@ Tras esto, puedes cerrar SSH: la app y noVNC seguirán activos y se iniciarán d
 | 8 | Ejecutar `./scripts/start_servicio.sh` desde la raíz del proyecto. |
 | 9 | Abrir puertos 5000 y 6080 en el firewall si aplica. |
 | 10 | Probar en el navegador: http://3.147.102.192:5000 y, si hace falta, http://3.147.102.192:6080/vnc.html. |
-| 11 (opc.) | Dejar corriendo con systemd: copiar `scripts/systemd/mop-dga.service` y `novnc.service` a `/etc/systemd/system/`, ajustar rutas, `enable` y `start`. |
 
 (Opcional) Crear en el servidor la estructura de carpetas destino (`SHARED_ROOT_NAME` + `BASE_DEST_DIRS_REL`) para que la app mueva ahí los .xls; un script externo puede leer esa carpeta para subir a una base de datos. Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.
