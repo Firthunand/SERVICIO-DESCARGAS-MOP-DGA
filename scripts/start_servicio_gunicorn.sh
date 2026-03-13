@@ -20,6 +20,13 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
+# 0. Limpiar posibles procesos anteriores (Xvfb, openbox, x11vnc) en este servidor
+echo "Revisando y deteniendo procesos previos de Xvfb, openbox y x11vnc (si existen)..."
+pkill -f "Xvfb :${DISPLAY_NUM}" 2>/dev/null || true
+pkill -f "openbox" 2>/dev/null || true
+pkill -f "x11vnc" 2>/dev/null || true
+sleep 1
+
 # 1. Xvfb (pantalla virtual)
 if [ -f "/tmp/.X${DISPLAY_NUM}-lock" ]; then
   echo "Display :${DISPLAY_NUM} ya en uso (Xvfb corriendo)."
@@ -55,6 +62,7 @@ fi
 # 4. Gunicorn (usa el gunicorn instalado en el sistema o en el PATH)
 echo ""
 echo "Iniciando aplicación con Gunicorn en $PROYECTO_ROOT"
-# Usar run_flask:app como entrypoint WSGI
-exec gunicorn --workers 3 --bind 0.0.0.0:5000 run_flask:app
+# Usar un solo worker para compartir estado en memoria (JOB_STATE, sesión única, etc.)
+# y permitir varios hilos dentro del mismo proceso.
+exec gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 run_flask:app
 
