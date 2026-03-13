@@ -42,6 +42,22 @@ JOB_STATE = {
     "download_path": None,   # ruta en el servidor donde se guardan los .xls
 }
 
+
+def reset_job_state() -> None:
+    """Deja el estado del job en blanco para una nueva sesión/descarga."""
+    JOB_STATE.update(
+        {
+            "status": "idle",
+            "lista": None,
+            "start_date": None,
+            "end_date": None,
+            "total_pozos": 0,
+            "procesados": 0,
+            "detalles": [],
+            "download_path": None,
+        }
+    )
+
 def on_job_status(event: dict):
     etype = event.get("type")
 
@@ -165,6 +181,11 @@ def index():
     session_owner = _update_session_claim(viewer_id)
     cfg = load_config("data/config.json")
     novnc_url = cfg.get("NOVNC_URL", "http://127.0.0.1:6080")
+
+    # Si la sesión es nueva y no hay descarga en curso, mostrar pantalla limpia
+    if session_owner and JOB_STATE["status"] in ("finalizado", "cancelado"):
+        reset_job_state()
+
     resp = make_response(
         render_template(
             "index.html",
