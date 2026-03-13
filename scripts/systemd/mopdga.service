@@ -3,14 +3,14 @@ Description=Servicio MOP DGA (Xvfb + VNC + Gunicorn)
 After=network.target
 
 [Service]
-User=datos
-Group=datos
-WorkingDirectory=/home/datos/SERVICIO-DESCARGAS-MOP-DGA
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/quantica/SERVICIO-DESCARGAS-MOP-DGA
 Environment=PATH=/home/datos/SERVICIO-DESCARGAS-MOP-DGA/env/bin
 Environment=LANG=es_CL.UTF-8
 Environment=LC_TIME=es_CL.UTF-8
 
-ExecStart=/home/datos/SERVICIO-DESCARGAS-MOP-DGA/scripts/start_servicio_gunicorn.sh
+ExecStart=/opt/quantica/SERVICIO-DESCARGAS-MOP-DGA/scripts/start_servicio_gunicorn.sh
 Restart=always
 RestartSec=5
 
