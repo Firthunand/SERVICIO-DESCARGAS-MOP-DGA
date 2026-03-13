@@ -52,13 +52,9 @@ else
   echo "AVISO: x11vnc no instalado. Instalar con: sudo apt install x11vnc"
 fi
 
-# 4. Gunicorn (entorno virtual si existe)
+# 4. Gunicorn (usa el gunicorn instalado en el sistema o en el PATH)
 echo ""
 echo "Iniciando aplicación con Gunicorn en $PROYECTO_ROOT"
-if [ -d "$PROYECTO_ROOT/env" ]; then
-  . "$PROYECTO_ROOT/env/bin/activate"
-fi
-
 # Usar run_flask:app como entrypoint WSGI
 exec gunicorn --workers 3 --bind 0.0.0.0:5000 run_flask:app
 
