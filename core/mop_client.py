@@ -97,12 +97,13 @@ def run_download_job(
     # --- Resolve BASE DEST DIRS ---
     base_dirs: list[Path] = []
 
-    if "BASE_DEST_DIRS_REL" in cfg and "SHARED_ROOT_NAME" in cfg:
+    # Prioridad a rutas absolutas si están definidas
+    if "BASE_DEST_DIRS" in cfg:
+        base_dirs = [Path(p) for p in cfg.get("BASE_DEST_DIRS", [])]
+    elif "BASE_DEST_DIRS_REL" in cfg and "SHARED_ROOT_NAME" in cfg:
         shared_root = Path.home() / cfg["SHARED_ROOT_NAME"]
         base_dirs = [shared_root / Path(rel) for rel in cfg.get("BASE_DEST_DIRS_REL", [])]
         print("DEBUG shared_root:", shared_root)
-    else:
-        base_dirs = [Path(p) for p in cfg.get("BASE_DEST_DIRS", [])]
 
     print("DEBUG base_dirs:")
     for b in base_dirs:
