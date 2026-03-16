@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
-from core.naming import expected_filename_for
+from core.naming import expected_filename_for, parse_year_from_period
 from core.downloads import (
     downloads_folder_for_subfolder,
     find_existing_files_for_code,
@@ -108,6 +108,21 @@ def run_download_job(
     print("DEBUG base_dirs:")
     for b in base_dirs:
         print(" -", b, "exists?", b.exists())
+
+    def _dest_root_for_lista(lista: str) -> Path | None:
+        """Devuelve la carpeta raíz de destino según la lista (P5, P12, P17, P22)."""
+        lista = (lista or "").upper()
+        for base in base_dirs:
+            name = base.name.upper()
+            if lista == "P5" and ("P5" in name or "5 POZOS" in name):
+                return base
+            if lista == "P12" and "P12" in name:
+                return base
+            if lista == "P17" and "P17" in name:
+                return base
+            if lista == "P22" and "P22" in name:
+                return base
+        return None
 
     chrome_options = Options()
     prefs = {
@@ -461,14 +476,23 @@ def run_download_job(
             if renamed:
                 print(f"Downloaded & renamed to: {renamed.name}")
 
-                moved = move_report_to_destination(
-                    renamed_file=renamed,
-                    base_dirs=base_dirs,
-                    ob_code=code,
-                    start=startValue,
-                    end=endValue,
-                    pozos_map=pozos_map,
-                )
+                # Destino basado solo en la lista (P5, P12, P17, P22)
+                dest_root = _dest_root_for_lista(lista_id)
+                if dest_root is None:
+                    print("WARNING: No destination root found for lista", lista_id)
+                    moved = None
+                else:
+                    year = parse_year_from_period(startValue, endValue)
+                    target_dir = dest_root / str(year)
+                    target_dir.mkdir(parents=True, exist_ok=True)
+
+                    target_path = target_dir / renamed.name
+                    if target_path.exists():
+                        timestamp = datetime.now().strftime("%H%M%S")
+                        target_path = target_dir / f"{renamed.stem}_{timestamp}{renamed.suffix}"
+
+                    renamed.replace(target_path)
+                    moved = target_path
                 if moved:
                     print(f"Moved to: {moved}")
                     if on_status:
