@@ -1,3 +1,8 @@
+"""
+Cliente Selenium para el portal MOP: abre la URL de búsqueda pública, espera CAPTCHA (resuelto por el usuario vía noVNC),
+rellena código de obra, Buscar, Mediciones, fechas, Exportar a Excel; mueve los .xls a destino por lista (P5/P12/P17/P22).
+Respeta stop_event en bucles para permitir cancelación desde la UI.
+"""
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional
@@ -28,12 +33,14 @@ CLICK_NAV_WAIT = 8
 
 
 def wait_page_loaded(driver, timeout=30):
+    """Espera a que document.readyState sea 'complete'."""
     WebDriverWait(driver, timeout).until(
         lambda d: d.execute_script("return document.readyState") == "complete"
     )
 
 
 def wait_overlay_gone(driver, timeout=30):
+    """Espera a que desaparezca el overlay #waitingScreen del portal MOP (si existe)."""
     try:
         WebDriverWait(driver, timeout).until(
             EC.invisibility_of_element_located((By.ID, "waitingScreen"))
@@ -43,6 +50,7 @@ def wait_overlay_gone(driver, timeout=30):
 
 
 def click_mediciones(driver, timeout=15) -> bool:
+    """Localiza y hace clic en el botón/enlace 'Mediciones' en la página del MOP. Retorna True si tuvo éxito."""
     wait = WebDriverWait(driver, timeout)
     xpaths = [
         "//button[normalize-space()='Mediciones']",
@@ -72,8 +80,11 @@ def run_download_job(
     stop_event: Optional[threading.Event] = None,
 ):
     """
-    Ejecuta el flujo completo de descargas para una lista de códigos.
-    on_status se usará luego para reportar estado a la web.
+    Ejecuta el flujo completo de descargas para una lista de códigos en un hilo.
+    Usa Selenium con Chrome (DISPLAY=:99, locale es_CL). Para cada código: abre MOP, espera CAPTCHA
+    (usuario lo resuelve en noVNC), rellena código, Buscar, Mediciones, fechas, Exportar; mueve el .xls
+    a la carpeta de destino según lista_id (BASE_DEST_DIRS + año). Respeta stop_event en bucles.
+    on_status(event) recibe dicts con type: pozo_update | job_finished | job_cancelled.
     """
     # Asegurar que Chrome use el display virtual (Xvfb :99) en el servidor
     os.environ.setdefault("DISPLAY", ":99")

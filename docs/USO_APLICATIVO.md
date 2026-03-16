@@ -96,3 +96,5 @@ Si quieres **parar** la descarga antes de que termine:
 | Parar la descarga   | Pulsar “Detener descarga” mientras el estado sea “en_curso”.             |
 
 Si tienes problemas (por ejemplo la descarga no avanza o no ves el CAPTCHA), contacta al responsable técnico o al administrador del servidor.
+
+Para documentación técnica (arquitectura, módulos, dónde modificar el código), ver `docs/ARQUITECTURA.md`.

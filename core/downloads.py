@@ -1,3 +1,4 @@
+"""Carpeta de descargas por lista (~/Downloads/<lista>), búsqueda de .xls existentes y espera/renombrado de nuevos."""
 from pathlib import Path
 from datetime import datetime
 import time
@@ -10,6 +11,7 @@ DOWNLOAD_WAIT_TIMEOUT = 120
 
 
 def downloads_folder_for_subfolder(subfolder: str) -> Path:
+    """Devuelve ~/Downloads/<subfolder>, creando el directorio si no existe (ej. P5, P12)."""
     home = Path.home()
     downloads = home / "Downloads"
     target = downloads / subfolder
@@ -18,6 +20,7 @@ def downloads_folder_for_subfolder(subfolder: str) -> Path:
 
 
 def find_existing_files_for_code(download_dir: Path, code: str, expected_name: str):
+    """Busca un .xls ya descargado para el código: nombre exacto o glob *{code}*.xls. Retorna lista de Paths."""
     exact = download_dir / expected_name
     if exact.exists():
         return [exact]

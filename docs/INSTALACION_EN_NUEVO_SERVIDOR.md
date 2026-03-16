@@ -194,9 +194,18 @@ Cambiar la línea de `NOVNC_URL` a:
 
 Si en este servidor la IP pública es otra o usas nombre de dominio, usa esa URL. Guardar (Ctrl+O, Enter, Ctrl+X).
 
-Revisar también (si aplica):
+Revisar también la configuración de carpetas destino donde se moverán los archivos descargados. El flujo actual utiliza `BASE_DEST_DIRS` con rutas absolutas bajo `/opt/quantica`. Un ejemplo típico:
 
-- **SHARED_ROOT_NAME** y **BASE_DEST_DIRS_REL**: definen la **carpeta local en el servidor** donde se mueven los archivos (no se usa OneDrive; un script externo leerá esa carpeta para subir a una base de datos). Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.
+```json
+"BASE_DEST_DIRS": [
+  "/opt/quantica/EXTRACCIONES MOP/2366 - CASUB_Soporte P12",
+  "/opt/quantica/EXTRACCIONES MOP/2368 - CASUB_Soporte P17",
+  "/opt/quantica/EXTRACCIONES MOP/2367 - CASUB_Soporte P22",
+  "/opt/quantica/EXTRACCIONES MOP/2253 - COFANTI DGA 5 POZOS"
+]
+```
+
+Esas carpetas deben existir en el servidor y ser propiedad del usuario que ejecuta el servicio. Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md` para más detalles.
 
 ---
 
@@ -365,9 +374,9 @@ Si quieres, en un siguiente paso se puede detallar el contenido exacto de los ar
 | 4.1 | Generar locale español: `sudo locale-gen es_CL.UTF-8` y `sudo update-locale` (para Chrome y validación de fechas MOP). |
 | 5 | Copiar el proyecto al servidor (SCP o git clone). |
 | 6 | Crear venv, activar y `pip install -r requirements.txt`. |
-| 7 | En `data/config.json` poner `"NOVNC_URL": "http://3.147.102.192:6080"`. |
+| 7 | En `data/config.json` poner `"NOVNC_URL": "http://3.147.102.192:6080"` y configurar `BASE_DEST_DIRS` con las rutas de destino en `/opt/quantica/EXTRACCIONES MOP/...` (ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`). |
 | 8 | Ejecutar `./scripts/start_servicio.sh` desde la raíz del proyecto. |
 | 9 | Abrir puertos 5000 y 6080 en el firewall si aplica. |
 | 10 | Probar en el navegador: http://3.147.102.192:5000 y, si hace falta, http://3.147.102.192:6080/vnc.html. |
 
-(Opcional) Crear en el servidor la estructura de carpetas destino (`SHARED_ROOT_NAME` + `BASE_DEST_DIRS_REL`) para que la app mueva ahí los .xls; un script externo puede leer esa carpeta para subir a una base de datos. Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.
+(Opcional) Crear en el servidor solo la estructura de carpetas destino indicada en `BASE_DEST_DIRS` (típicamente bajo `/opt/quantica/EXTRACCIONES MOP/...`) para que la app mueva ahí los `.xls`; un script externo puede leer esas carpetas para subir los datos a una base de datos. Ver `docs/DESTINO_ARCHIVOS_EN_SERVIDOR.md`.

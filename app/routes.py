@@ -1,3 +1,8 @@
+"""
+Rutas web y API del servicio MOP DGA.
+Gestiona sesión única (cookie viewer_id + heartbeat), estado del job de descarga (JOB_STATE)
+y lanzamiento/detención del hilo que ejecuta run_download_job en core.mop_client.
+"""
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
 from core.config import load_codes, load_config
 from core.downloads import downloads_folder_for_subfolder
@@ -59,6 +64,7 @@ def reset_job_state() -> None:
     )
 
 def on_job_status(event: dict):
+    """Callback del hilo de descarga: actualiza JOB_STATE con pozo_update, job_finished o job_cancelled."""
     etype = event.get("type")
 
     if etype == "pozo_update":
@@ -87,6 +93,7 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/", methods=["GET", "POST"])
 def index():
+    """Página principal: GET muestra formulario y estado; POST inicia job en hilo si no hay uno en curso."""
     viewer_id = request.cookies.get("viewer_id")
     if not viewer_id:
         viewer_id = str(uuid.uuid4())
@@ -200,6 +207,7 @@ def index():
 
 @bp.route("/api/estado-actual")
 def api_estado_actual():
+    """Devuelve JOB_STATE y session_owner en JSON; usado por el front para polling y actualizar UI."""
     viewer_id = request.cookies.get("viewer_id")
     session_owner = _update_session_claim(viewer_id)
     return jsonify({**JOB_STATE, "session_owner": session_owner})
@@ -207,6 +215,7 @@ def api_estado_actual():
 
 @bp.route("/api/detener-descarga", methods=["POST"])
 def api_detener_descarga():
+    """Marca STOP_REQUESTED y pone status a cancelado de inmediato (stop duro en UI)."""
     if JOB_STATE["status"] == "en_curso":
         STOP_REQUESTED.set()
         # Stop "duro": reflejar la cancelación de inmediato en la UI,

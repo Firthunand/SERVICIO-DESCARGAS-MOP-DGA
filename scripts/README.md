@@ -37,20 +37,11 @@ chmod +x scripts/start_servicio_gunicorn.sh
 ./scripts/start_servicio_gunicorn.sh
 ```
 
-- Usa el entorno virtual `env/` si existe.
-- Levanta la app con Gunicorn en `0.0.0.0:5000` usando `run_flask:app` como entrypoint.
+- Al iniciar, mata procesos previos de Xvfb, openbox y x11vnc para evitar conflictos de puertos.
+- Usa **1 worker** de Gunicorn (estado en memoria compartido). Si usas entorno virtual `env/`, actívalo antes o configúralo en el servicio systemd (PATH con Miniconda o venv).
+- Levanta la app en `0.0.0.0:5000` con `run_flask:app`.
 
-Se recomienda combinar este script con un servicio **systemd** para que quede permanente.
-
-## systemd/rclone-onedrive.service
-
-Servicio para montar OneDrive con rclone en `/home/datos/Quantica` (para que la app guarde ahí los archivos). Ver **docs/ONEDRIVE_RCLONE_PASO_A_PASO.md** para la guía completa.
-
-```bash
-sudo cp scripts/systemd/rclone-onedrive.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now rclone-onedrive
-```
+Se recomienda combinar este script con un servicio **systemd** (`mopdga.service`) para que quede permanente.
 
 ---
 
