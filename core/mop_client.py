@@ -147,6 +147,7 @@ def run_download_job(
     chrome_options.add_experimental_option("prefs", prefs)
 
     # Ajustes para Linux/servidor (sin --headless para que se vea en noVNC)
+    '''
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -156,7 +157,7 @@ def run_download_job(
     chrome_options.add_argument("--no-default-browser-check")
     # Idioma de la interfaz y del contenido (evita validación MM/DD en el portal MOP)
     chrome_options.add_argument("--lang=es-CL")
-
+    '''
     driver = webdriver.Chrome(options=chrome_options)
     driver.set_page_load_timeout(600)
     wait = WebDriverWait(driver, 30)
