@@ -609,13 +609,13 @@ class MigracionDGAMOP:
 if __name__ == "__main__":
     
     db_config = {
-        'host': '3.147.102.192',
-        'port': '5432',
-        'user': 'postgres',
-        'password': 'Quantica346',
-        'database': 'thingsboard',
-        'schema': 'normativa_dga',
-        'tabla': 'dga_mop_mediciones'
+        'host': '',
+        'port': '',
+        'user': '',
+        'password': '',
+        'database': '',
+        'schema': '',
+        'tabla': ''
     }
     
     # Ruta adaptada para la EC2 de Amazon (Ubuntu)
