@@ -1,7 +1,8 @@
 """
 Rutas web y API del servicio MOP DGA.
 Gestiona sesión única (cookie viewer_id + heartbeat), estado del job de descarga (JOB_STATE)
-y lanzamiento/detención del hilo que ejecuta run_download_job en core.mop_client.
+y lanzamiento/detención del proceso que ejecuta run_download_job en core.mop_client.
+El job corre en un proceso separado (multiprocessing) para que la web no se cuelgue por el GIL.
 """
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
 from core.config import load_codes, load_config
@@ -9,6 +10,7 @@ from core.downloads import downloads_folder_for_subfolder
 import threading
 import time
 import uuid
+import multiprocessing
 from core.mop_client import run_download_job
 from datetime import datetime
 
@@ -33,8 +35,8 @@ def _update_session_claim(viewer_id: str | None) -> bool:
     return viewer_id is not None and ACTIVE_VIEWER_ID == viewer_id
 
 
-# Evento para solicitar detener la descarga en curso
-STOP_REQUESTED = threading.Event()
+# Job en proceso separado: el worker web no comparte GIL con Selenium
+CURRENT_JOB = {"process": None, "stop_event": None}
 
 JOB_STATE = {
     "status": "idle",        # idle | en_curso | finalizado | cancelado
@@ -87,6 +89,27 @@ def on_job_status(event: dict):
         JOB_STATE["status"] = "finalizado"
     elif etype == "job_cancelled":
         JOB_STATE["status"] = "cancelado"
+
+
+def _run_job_in_subprocess(cfg: dict, codes: list, selected_list: str, queue: multiprocessing.Queue, stop_event: multiprocessing.Event) -> None:
+    """Ejecuta run_download_job en un proceso hijo; envía eventos por queue. Usado para no bloquear la web (GIL)."""
+    def send(event: dict) -> None:
+        queue.put(event)
+    run_download_job(cfg, codes, selected_list, send, stop_event=stop_event)
+
+
+def _drain_job_queue(queue: multiprocessing.Queue) -> None:
+    """Hilo que recibe eventos del proceso del job y actualiza JOB_STATE. Termina al recibir job_finished/job_cancelled."""
+    while True:
+        ev = queue.get()
+        on_job_status(ev)
+        if ev.get("type") in ("job_finished", "job_cancelled"):
+            if CURRENT_JOB["process"] is not None:
+                CURRENT_JOB["process"].join(timeout=10)
+            CURRENT_JOB["process"] = None
+            CURRENT_JOB["stop_event"] = None
+            break
+
 
 bp = Blueprint("main", __name__)
 
@@ -175,14 +198,17 @@ def index():
         }
         '''
 
-        STOP_REQUESTED.clear()
-        t = threading.Thread(
-            target=run_download_job,
-            args=(cfg, codes, selected_list, on_job_status),
-            kwargs={"stop_event": STOP_REQUESTED},
-            daemon=True,
+        queue = multiprocessing.Queue()
+        stop_ev = multiprocessing.Event()
+        drain_thread = threading.Thread(target=_drain_job_queue, args=(queue,), daemon=True)
+        drain_thread.start()
+        p = multiprocessing.Process(
+            target=_run_job_in_subprocess,
+            args=(cfg, codes, selected_list, queue, stop_ev),
         )
-        t.start()
+        p.start()
+        CURRENT_JOB["process"] = p
+        CURRENT_JOB["stop_event"] = stop_ev
         return redirect(url_for("main.index"))
 
     session_owner = _update_session_claim(viewer_id)
@@ -215,10 +241,9 @@ def api_estado_actual():
 
 @bp.route("/api/detener-descarga", methods=["POST"])
 def api_detener_descarga():
-    """Marca STOP_REQUESTED y pone status a cancelado de inmediato (stop duro en UI)."""
-    if JOB_STATE["status"] == "en_curso":
-        STOP_REQUESTED.set()
-        # Stop "duro": reflejar la cancelación de inmediato en la UI,
-        # aunque el hilo de Selenium tarde unos segundos en terminar.
+    """Marca stop en el proceso del job y pone status a cancelado de inmediato (stop duro en UI)."""
+    if JOB_STATE["status"] == "en_curso" and CURRENT_JOB.get("stop_event"):
+        CURRENT_JOB["stop_event"].set()
+        # Stop "duro": reflejar la cancelación de inmediato en la UI
         JOB_STATE["status"] = "cancelado"
     return jsonify({"ok": True})
