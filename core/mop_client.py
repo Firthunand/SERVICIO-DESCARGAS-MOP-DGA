@@ -145,6 +145,10 @@ def run_download_job(
         "intl.accept_languages": "es-CL,es,en",
     }
     chrome_options.add_experimental_option("prefs", prefs)
+    # Reducir detección de automation para que reCAPTCHA no pida el CAPTCHA de nuevo tras resolverlo (noVNC)
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
     # Ajustes para Linux/servidor (sin --headless para que se vea en noVNC)
     chrome_options.add_argument("--no-sandbox")
@@ -158,6 +162,13 @@ def run_download_job(
     chrome_options.add_argument("--lang=es-CL")
 
     driver = webdriver.Chrome(options=chrome_options)
+    # Ocultar navigator.webdriver para que reCAPTCHA no trate la sesión como bot (menos repetición de CAPTCHA)
+    try:
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "Object.defineProperty(navigator, 'webdriver', { get: () => undefined });"
+        })
+    except Exception:
+        pass
     driver.set_page_load_timeout(600)
     wait = WebDriverWait(driver, 30)
 
